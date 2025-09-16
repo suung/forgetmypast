@@ -1,0 +1,32 @@
+{
+  "name": "forgetmypast",
+  "version": "1.0.0",
+  "description": "A simple Progressive Web App that removes tracking parameters from URLs and resolves shortened links.",
+  "main": "sw.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/suung/forgetmypast.git"
+  },
+  "keywords": [
+    "pwa",
+    "url-cleaner",
+    "tracking-removal",
+    "privacy"
+  ],
+  "author": "",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/suung/forgetmypast/issues"
+  },
+  "homepage": "https://github.com/suung/forgetmypast#readme",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jsdom": "^27.0.0"
+  }
+}
