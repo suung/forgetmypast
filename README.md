@@ -1,89 +1,101 @@
-# Link Cleaner PWA
+# Link Cleaner
 
-A simple Progressive Web App that cleans tracking parameters from URLs and resolves shortened links.
+A simple Progressive Web App that removes tracking parameters from URLs and resolves shortened links.
 
-## Features
+## 🚀 Try it now
 
-- 🔗 **Share Target**: Share links to this app from any other app
-- 🧹 **Clean Tracking**: Removes UTM parameters, Facebook tracking, Google tracking, and more
-- 🔄 **Resolve Short URLs**: Attempts to resolve bit.ly, t.co, and other shortened URLs
-- 📱 **Mobile First**: Designed for mobile devices with a clean, modern UI
-- 📤 **Re-share**: Share the cleaned URL back to any app or copy to clipboard
-- 🔒 **Privacy Focused**: Everything runs in your browser, no data sent to servers
+**Live app**: https://suung.github.io/forgetmypast/
 
-## How to Use
+## ✨ Features
 
-1. **Install the PWA**:
-   - Visit the app on your mobile device
-   - Tap the browser menu and select "Add to Home Screen"
+- **Share from any app** - Share links directly to Link Cleaner from Twitter, Reddit, news apps, etc.
+- **Remove tracking** - Strips UTM parameters, Facebook tracking, Google Analytics, and more
+- **Resolve short URLs** - Expands bit.ly, t.co, and other shortened links when possible  
+- **Clean interface** - Simple, mobile-first design that works offline
+- **Privacy focused** - Everything runs in your browser, no data sent to servers
+- **Re-share easily** - Share the cleaned URL or copy to clipboard
 
-2. **Share links to clean**:
-   - From any app, tap Share
-   - Select "Link Cleaner" from the share menu
-   - The app will open with the link already loaded
+## 📱 How to use
 
-3. **Clean and re-share**:
-   - Tap "Clean Link" to remove tracking parameters
-   - Tap "Share Clean" to share the cleaned URL
+### On mobile (recommended):
+1. **Install**: Visit the app and tap "Add to Home Screen" 
+2. **Share**: From any app, tap Share → "Link Cleaner"
+3. **Clean**: The app opens with your link ready to clean
+4. **Re-share**: Tap "Share Clean" to share the cleaned URL
 
-## Setup for GitHub Pages
+### On desktop:
+1. **Visit**: Go to the app URL
+2. **Paste**: Paste any messy URL into the text box
+3. **Clean**: Click "Clean Link" to remove tracking
+4. **Copy**: Copy the clean URL to use anywhere
 
-This PWA is configured to work on GitHub Pages. Here's how to deploy:
+## 🔧 What gets cleaned
 
-### Option 1: Project Site (recommended for this repo)
+The app removes common tracking parameters including:
+- UTM parameters (`utm_source`, `utm_medium`, `utm_campaign`, etc.)
+- Facebook tracking (`fbclid`)
+- Google tracking (`gclid`, `_ga`, `_gid`)
+- Twitter tracking (`twclid`)
+- Instagram tracking (`igshid`)
+- Email marketing tracking (`mc_cid`, `mc_eid`)
+- And many more...
 
-1. **Enable GitHub Pages**:
-   - Go to your repo Settings → Pages
-   - Source: "Deploy from a branch"
-   - Branch: "main" / "/ (root)"
-
-2. **Create the required icons**:
-   - Open `generate-icons.html` in a browser
-   - Generate and download the icons
-   - Save them as `icons/icon-192.png` and `icons/icon-512.png`
-
-3. **Access your PWA**:
-   - Visit `https://YOUR_USERNAME.github.io/forgetmypast/`
-   - Add to home screen on your mobile device
-
-### Option 2: User/Organization Site
-
-If you want to use this as your main GitHub Pages site:
-
-1. Rename this repo to `YOUR_USERNAME.github.io`
-2. Follow the same setup steps
-3. Access at `https://YOUR_USERNAME.github.io/`
-
-## Development
-
-To test locally:
-
-```bash
-# Serve the files (Python 3)
-python -m http.server 8000
-
-# Or with Node.js
-npx serve .
-
-# Then visit http://localhost:8000
-```
-
-**Note**: PWA features (service worker, share target) require HTTPS, so they won't work on `http://localhost` but the basic functionality will work for testing.
-
-## Browser Support
+## 🌐 Browser support
 
 - ✅ **Android Chrome/Edge**: Full support including Share Target
-- ✅ **iOS Safari**: Works but no Share Target support (iOS limitation)
-- ✅ **Desktop**: Works as a regular web app
+- ✅ **iOS Safari**: Works but no Share Target support (iOS limitation)  
+- ✅ **Desktop browsers**: Works as a regular web app
 
-## Technical Details
+---
+
+## 🛠 Development
+
+### Local development
+
+```bash
+# Clone the repository
+git clone https://github.com/suung/forgetmypast.git
+cd forgetmypast
+
+# Serve locally (choose one):
+python -m http.server 8000
+# or
+npx serve .
+
+# Visit http://localhost:8000
+```
+
+**Note**: PWA features (service worker, share target) require HTTPS, so they won't work on localhost but the basic functionality will work for testing.
+
+### Project structure
+
+```
+forgetmypast/
+├── index.html          # Main app
+├── sw.js              # Service worker
+├── manifest.webmanifest # PWA manifest
+├── icons/             # App icons
+│   ├── icon-192.png
+│   └── icon-512.png
+└── README.md
+```
+
+### Technical details
 
 - **Framework**: Vanilla JavaScript (no dependencies)
 - **Caching**: Service Worker with cache-first strategy
 - **Offline**: Basic offline support for cached pages
 - **Share Target**: Web Share Target API Level 2
-- **Icons**: Requires 192px and 512px PNG icons
+- **Icons**: 192px and 512px PNG icons for PWA installation
 
-## License
+### Deployment
+
+This app is configured for GitHub Pages. To deploy your own:
+
+1. Fork this repository
+2. Go to Settings → Pages → Deploy from branch → main
+3. Your app will be live at `https://yourusername.github.io/forgetmypast/`
+
+## 📄 License
 
 MIT License - see LICENSE file
