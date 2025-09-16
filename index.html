@@ -202,7 +202,10 @@
       'fbclid', 'gclid', 'msclkid', 'twclid', 'igshid',
       'ref', 'referer', 'referrer', '_ga', '_gid',
       'mc_cid', 'mc_eid', 'campaign_id', 'ad_id',
-      'source', 'medium', 'campaign', 'content'
+      'source', 'medium', 'campaign', 'content',
+      // Google mobile search tracking parameters
+      'ved', 'uact', 'sa', 'biw', 'bih', 'dpr', 'ei', 'gs_lcp',
+      'sclient', 'client', 'hs', 'hl', 'gl', 'cshid', 'psb'
     ];
 
     // URL shorteners to resolve
@@ -226,7 +229,23 @@
       try {
         const url = new URL(urlString);
         
-        // Remove tracking parameters
+        // Handle LinkedIn share URLs
+        if (url.hostname === 'www.linkedin.com' && url.pathname === '/shareArticle') {
+          const originalUrl = url.searchParams.get('url');
+          if (originalUrl) {
+            return decodeURIComponent(originalUrl);
+          }
+        }
+        
+        // Handle Google mobile search share URLs
+        if (url.hostname === 'www.google.com' && url.pathname === '/search') {
+          const searchQuery = url.searchParams.get('q');
+          if (searchQuery) {
+            return `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+          }
+        }
+        
+        // Remove tracking parameters for other URLs
         TRACKING_PARAMS.forEach(param => {
           url.searchParams.delete(param);
         });

@@ -33,10 +33,17 @@ A simple Progressive Web App that removes tracking parameters from URLs and reso
 
 ## 🔧 What gets cleaned
 
-The app removes common tracking parameters including:
+The app handles various URL types and removes tracking:
+
+### 📱 Platform-specific cleaning:
+- **LinkedIn share URLs** - Extracts the original URL from `linkedin.com/shareArticle?url=...`
+- **Google mobile search** - Simplifies to just the search query, removes tracking parameters
+- **Shortened URLs** - Attempts to resolve bit.ly, t.co, and other shorteners
+
+### 🧹 Tracking parameters removed:
 - UTM parameters (`utm_source`, `utm_medium`, `utm_campaign`, etc.)
 - Facebook tracking (`fbclid`)
-- Google tracking (`gclid`, `_ga`, `_gid`)
+- Google tracking (`gclid`, `_ga`, `_gid`, `ved`, `uact`, etc.)
 - Twitter tracking (`twclid`)
 - Instagram tracking (`igshid`)
 - Email marketing tracking (`mc_cid`, `mc_eid`)
