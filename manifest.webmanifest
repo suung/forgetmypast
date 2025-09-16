@@ -1,6 +1,6 @@
 {
-  "name": "Link Cleaner",
-  "short_name": "Cleaner",
+  "name": "Forget My Past",
+  "short_name": "ForgetMyPast",
   "description": "Clean tracking parameters from links and resolve shortened URLs",
   "start_url": "./",
   "scope": "./",

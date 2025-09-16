@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Link Cleaner</title>
+  <title>Forget My Past</title>
   <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./favicon.png" type="image/png">
   <meta name="theme-color" content="#111827">
   <style>
     * {
@@ -134,16 +135,47 @@
     }
     
     .icon {
-      font-size: 48px;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background-image: url('./icons/icon-192.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    
+    .install-container {
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .btn-install {
+      background: linear-gradient(135deg, #00d4ff 0%, #9333ea 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: none;
+    }
+    
+    .btn-install:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="icon">🔗</div>
-    <h1>Link Cleaner</h1>
+    <div class="icon"></div>
+    <h1>Forget My Past</h1>
+    
+    <div class="install-container">
+      <button id="installBtn" class="btn-install">📱 Install App</button>
+    </div>
     
     <div class="input-group">
       <label for="originalUrl">Original URL</label>
@@ -184,6 +216,10 @@
     const cleanBtn = document.getElementById('cleanBtn');
     const shareBtn = document.getElementById('shareBtn');
     const status = document.getElementById('status');
+    const installBtn = document.getElementById('installBtn');
+
+    // PWA install functionality
+    let deferredPrompt;
 
     // Clean tracking parameters from URL
     function cleanUrl(urlString) {
@@ -324,6 +360,30 @@
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
+
+    // PWA install event listeners
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          showStatus('App installed successfully!');
+        }
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      showStatus('App installed successfully!');
+      installBtn.style.display = 'none';
+    });
 
     // Register service worker
     if ('serviceWorker' in navigator) {

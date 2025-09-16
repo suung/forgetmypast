@@ -37,7 +37,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // Handle share target POST requests
-  if (url.pathname === '/share-target' && event.request.method === 'POST') {
+  if (url.pathname.endsWith('/share-target') && event.request.method === 'POST') {
     event.respondWith(handleShareTarget(event.request));
     return;
   }
@@ -83,11 +83,14 @@ async function handleShareTarget(request) {
     if (title) params.set('title', title);
     if (url) params.set('url', url);
 
-    // Redirect to main app with shared data
-    const redirectUrl = '/?' + params.toString();
+    // Get the correct base URL for redirect
+    const baseUrl = new URL(request.url);
+    const redirectUrl = baseUrl.origin + baseUrl.pathname.replace('/share-target', '/') + '?' + params.toString();
+    
     return Response.redirect(redirectUrl, 303);
   } catch (error) {
     console.error('Error handling share target:', error);
-    return Response.redirect('/', 303);
+    const baseUrl = new URL(request.url);
+    return Response.redirect(baseUrl.origin + baseUrl.pathname.replace('/share-target', '/'), 303);
   }
 }
