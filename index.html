@@ -178,18 +178,12 @@
     </div>
     
     <div class="input-group">
-      <label for="originalUrl">Original URL</label>
-      <textarea id="originalUrl" placeholder="Paste or share a link here..."></textarea>
-    </div>
-    
-    <div class="input-group">
-      <label for="cleanedUrl">Cleaned URL</label>
-      <textarea id="cleanedUrl" placeholder="Cleaned URL will appear here..." readonly></textarea>
+      <label for="urlInput">Clean URL</label>
+      <textarea id="urlInput" placeholder="Paste or share a link here - it will be cleaned automatically..."></textarea>
     </div>
     
     <div class="button-group">
-      <button id="cleanBtn" class="btn-primary">Clean Link</button>
-      <button id="shareBtn" class="btn-secondary" disabled>Share Clean</button>
+      <button id="shareBtn" class="btn-primary" disabled>Share</button>
     </div>
     
     <div id="status" class="status"></div>
@@ -218,9 +212,7 @@
       'short.link', 'tiny.cc', 'is.gd', 'buff.ly', 'ift.tt'
     ];
 
-    const originalUrlInput = document.getElementById('originalUrl');
-    const cleanedUrlInput = document.getElementById('cleanedUrl');
-    const cleanBtn = document.getElementById('cleanBtn');
+    const urlInput = document.getElementById('urlInput');
     const shareBtn = document.getElementById('shareBtn');
     const status = document.getElementById('status');
     const installBtn = document.getElementById('installBtn');
@@ -302,51 +294,41 @@
       }, 3000);
     }
 
-    // Clean link handler
-    cleanBtn.addEventListener('click', async () => {
-      const originalUrl = originalUrlInput.value.trim();
+    // Auto-clean URL when input changes
+    async function cleanUrlInPlace() {
+      const url = urlInput.value.trim();
       
-      if (!originalUrl) {
-        showStatus('Please enter a URL', 'error');
+      if (!url) {
+        shareBtn.disabled = true;
         return;
       }
       
-      cleanBtn.textContent = 'Cleaning...';
-      cleanBtn.disabled = true;
-      
       try {
         // First, try to resolve if it's a short URL
-        let resolvedUrl = await resolveShortUrl(originalUrl);
+        let resolvedUrl = await resolveShortUrl(url);
         
         // Then clean tracking parameters
         let cleanedUrl = cleanUrl(resolvedUrl);
         
-        cleanedUrlInput.value = cleanedUrl;
-        shareBtn.disabled = false;
-        
-        if (cleanedUrl !== originalUrl) {
-          showStatus('Link cleaned successfully!');
-          // Auto-share the cleaned link
-          setTimeout(() => shareCleanedUrl(), 500);
-        } else {
-          showStatus('Link was already clean!');
-          // Still auto-share even if it was already clean
-          setTimeout(() => shareCleanedUrl(), 500);
+        // Update the input with the cleaned URL
+        if (cleanedUrl !== url) {
+          urlInput.value = cleanedUrl;
+          showStatus('Link cleaned automatically!');
         }
+        
+        shareBtn.disabled = false;
       } catch (e) {
-        showStatus('Error cleaning link', 'error');
-      } finally {
-        cleanBtn.textContent = 'Clean Link';
-        cleanBtn.disabled = false;
+        // If cleaning fails, still allow sharing the original
+        shareBtn.disabled = false;
       }
-    });
+    }
 
-    // Share cleaned URL function
-    async function shareCleanedUrl() {
-      const cleanedUrl = cleanedUrlInput.value;
+    // Share URL function
+    async function shareUrl() {
+      const url = urlInput.value.trim();
       
-      if (!cleanedUrl) {
-        showStatus('No cleaned URL to share', 'error');
+      if (!url) {
+        showStatus('No URL to share', 'error');
         return;
       }
       
@@ -355,34 +337,29 @@
         try {
           await navigator.share({
             title: 'Cleaned Link - Forget My Past',
-            url: cleanedUrl
+            url: url
           });
           showStatus('Link shared successfully!');
           return;
         } catch (e) {
-          console.log('Share error:', e);
           if (e.name === 'AbortError') {
             showStatus('Share cancelled');
             return;
-          } else {
-            // Share failed, fall back to clipboard
-            console.log('Share failed, falling back to clipboard:', e);
           }
         }
       }
       
       // Fallback to clipboard
       try {
-        await navigator.clipboard.writeText(cleanedUrl);
+        await navigator.clipboard.writeText(url);
         showStatus('Link copied to clipboard!');
       } catch (e) {
-        console.error('Clipboard error:', e);
         showStatus('Could not copy link', 'error');
       }
     }
 
-    // Share clean link handler
-    shareBtn.addEventListener('click', shareCleanedUrl);
+    // Share link handler
+    shareBtn.addEventListener('click', shareUrl);
 
     // Handle shared URLs from other apps
     async function handleSharedUrl() {
@@ -390,7 +367,8 @@
       const sharedUrl = params.get('url') || params.get('text');
       
       if (sharedUrl) {
-        originalUrlInput.value = sharedUrl;
+        // Put the URL in the input and clean it
+        urlInput.value = sharedUrl;
         
         // Clear URL parameters immediately
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -399,11 +377,12 @@
         try {
           showStatus('Cleaning and sharing...', 'success');
           
-          // Clean the URL
+          // Clean the URL in place
           let resolvedUrl = await resolveShortUrl(sharedUrl);
           let cleanedUrl = cleanUrl(resolvedUrl);
           
-          cleanedUrlInput.value = cleanedUrl;
+          // Update input with cleaned URL
+          urlInput.value = cleanedUrl;
           shareBtn.disabled = false;
           
           // Small delay to ensure UI is updated
@@ -418,9 +397,8 @@
               });
               showStatus('Link shared successfully!');
             } catch (shareError) {
-              console.log('Share error:', shareError);
               if (shareError.name === 'AbortError') {
-                showStatus('Share cancelled - you can use the buttons below');
+                showStatus('Share cancelled - you can use the button below');
               } else {
                 // Fallback to clipboard if share fails
                 await navigator.clipboard.writeText(cleanedUrl);
@@ -434,8 +412,7 @@
           }
         } catch (e) {
           // If there's an error, show the normal interface
-          console.error('Auto-share error:', e);
-          showStatus('Auto-share failed - you can use the buttons below', 'error');
+          showStatus('Auto-share failed - you can use the button below', 'error');
         }
       }
     }
@@ -478,13 +455,22 @@
     // Initialize
     handleSharedUrl();
     
-    // Auto-clean when URL is pasted
-    originalUrlInput.addEventListener('paste', () => {
+    // Auto-clean when URL is pasted or input changes
+    urlInput.addEventListener('paste', () => {
       setTimeout(() => {
-        if (originalUrlInput.value.trim()) {
-          cleanBtn.click();
-        }
+        cleanUrlInPlace();
       }, 100);
+    });
+    
+    urlInput.addEventListener('input', () => {
+      // Enable/disable share button based on input
+      shareBtn.disabled = !urlInput.value.trim();
+      
+      // Auto-clean after a short delay (debounced)
+      clearTimeout(urlInput.cleanTimeout);
+      urlInput.cleanTimeout = setTimeout(() => {
+        cleanUrlInPlace();
+      }, 500);
     });
   </script>
 </body>

@@ -43,25 +43,21 @@ describe('Forget My Past PWA Integration Tests', () => {
       expect(heading.textContent).toBe('Forget My Past');
     });
 
-    test('has all required input fields', () => {
-      const originalUrlInput = document.getElementById('originalUrl');
-      const cleanedUrlInput = document.getElementById('cleanedUrl');
-      
-      expect(originalUrlInput).toBeTruthy();
-      expect(cleanedUrlInput).toBeTruthy();
-      expect(cleanedUrlInput.readOnly).toBe(true);
+    test('has single URL input field', () => {
+      const urlInput = document.getElementById('urlInput');
+      expect(urlInput).toBeTruthy();
+      expect(urlInput.placeholder).toContain('cleaned automatically');
     });
 
-    test('has all required buttons', () => {
-      const cleanBtn = document.getElementById('cleanBtn');
+    test('has only share button (no clean button)', () => {
       const shareBtn = document.getElementById('shareBtn');
+      const cleanBtn = document.getElementById('cleanBtn');
       const installBtn = document.getElementById('installBtn');
       
-      expect(cleanBtn).toBeTruthy();
       expect(shareBtn).toBeTruthy();
+      expect(cleanBtn).toBeFalsy(); // Should not exist
       expect(installBtn).toBeTruthy();
-      expect(cleanBtn.textContent).toBe('Clean Link');
-      expect(shareBtn.textContent).toBe('Share Clean');
+      expect(shareBtn.textContent).toBe('Share');
       expect(installBtn.textContent).toBe('📱 Install App');
     });
 
@@ -89,46 +85,68 @@ describe('Forget My Past PWA Integration Tests', () => {
     });
   });
 
-  describe('URL Cleaning Integration', () => {
-    test('cleans LinkedIn URLs with rcm parameter', () => {
+  describe('Automatic URL Cleaning', () => {
+    test('automatically cleans URL when pasted', async () => {
       const testUrl = 'https://www.linkedin.com/feed/update/urn:li:activity:7375702990294104401-IJINI?utm_source=share&utm_medium=member_android&rcm=ACoAABucfY4BuVRMj7GJdb7oRxImQAZmPdyyiQ4';
       
-      const originalInput = document.getElementById('originalUrl');
-      const cleanedInput = document.getElementById('cleanedUrl');
+      const urlInput = document.getElementById('urlInput');
       
-      // Simulate user input
-      originalInput.value = testUrl;
+      // Mock the cleaning function
+      window.cleanUrl = (url) => url.split('?')[0]; // Simple mock
       
-      // Simulate clean button click
-      const cleanBtn = document.getElementById('cleanBtn');
-      const clickEvent = new window.Event('click');
-      cleanBtn.dispatchEvent(clickEvent);
+      // Simulate paste event
+      urlInput.value = testUrl;
+      const pasteEvent = new window.Event('paste');
+      urlInput.dispatchEvent(pasteEvent);
       
-      // Check that cleaned URL doesn't contain tracking parameters
-      expect(cleanedInput.value).not.toContain('rcm=');
-      expect(cleanedInput.value).not.toContain('utm_source=');
-      expect(cleanedInput.value).not.toContain('utm_medium=');
+      // Wait for automatic cleaning
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      // URL should be automatically cleaned in place
+      expect(urlInput.value).not.toContain('rcm=');
+      expect(urlInput.value).not.toContain('utm_source=');
+      expect(urlInput.value).not.toContain('utm_medium=');
     });
 
-    test('enables share button after cleaning', () => {
-      const testUrl = 'https://example.com?utm_source=test&rcm=tracking';
-      
-      const originalInput = document.getElementById('originalUrl');
+    test('enables share button when URL is present', () => {
+      const testUrl = 'https://example.com';
+      const urlInput = document.getElementById('urlInput');
       const shareBtn = document.getElementById('shareBtn');
       
       // Initially disabled
       expect(shareBtn.disabled).toBe(true);
       
-      // Simulate user input and cleaning
-      originalInput.value = testUrl;
-      const cleanBtn = document.getElementById('cleanBtn');
-      const clickEvent = new window.Event('click');
-      cleanBtn.dispatchEvent(clickEvent);
+      // Simulate URL input
+      urlInput.value = testUrl;
+      const inputEvent = new window.Event('input');
+      urlInput.dispatchEvent(inputEvent);
       
-      // Should be enabled after cleaning (may need async handling)
-      setTimeout(() => {
-        expect(shareBtn.disabled).toBe(false);
-      }, 100);
+      // Should enable share button
+      expect(shareBtn.disabled).toBe(false);
+    });
+
+    test('shares the cleaned URL directly', async () => {
+      const testUrl = 'https://example.com?utm_source=test&rcm=tracking';
+      const urlInput = document.getElementById('urlInput');
+      const shareBtn = document.getElementById('shareBtn');
+      
+      // Mock navigator.share
+      const mockShare = jest.fn(() => Promise.resolve());
+      window.navigator.share = mockShare;
+      
+      // Set cleaned URL
+      urlInput.value = 'https://example.com'; // Already cleaned
+      shareBtn.disabled = false;
+      
+      // Click share button
+      const clickEvent = new window.Event('click');
+      shareBtn.dispatchEvent(clickEvent);
+      
+      // Should share the clean URL
+      expect(mockShare).toHaveBeenCalledWith({
+        title: 'Cleaned Link - Forget My Past',
+        url: 'https://example.com'
+      });
     });
   });
 
@@ -215,20 +233,19 @@ describe('Forget My Past PWA Integration Tests', () => {
   describe('Error Handling', () => {
     test('handles invalid URLs gracefully', () => {
       const invalidUrl = 'not-a-valid-url';
-      const originalInput = document.getElementById('originalUrl');
-      const cleanedInput = document.getElementById('cleanedUrl');
+      const urlInput = document.getElementById('urlInput');
       
-      originalInput.value = invalidUrl;
+      urlInput.value = invalidUrl;
       
-      // Should not throw an error
+      // Should not throw an error when triggering input event
       expect(() => {
-        const cleanBtn = document.getElementById('cleanBtn');
-        const clickEvent = new window.Event('click');
-        cleanBtn.dispatchEvent(clickEvent);
+        const inputEvent = new window.Event('input');
+        urlInput.dispatchEvent(inputEvent);
       }).not.toThrow();
       
-      // Should handle the invalid URL (may be empty due to async nature)
-      expect(typeof cleanedInput.value).toBe('string');
+      // Should handle the invalid URL gracefully
+      expect(typeof urlInput.value).toBe('string');
+      expect(urlInput.value).toBe(invalidUrl); // Invalid URLs are left as-is
     });
   });
 });
