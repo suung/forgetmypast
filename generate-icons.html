@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <h1>PWA Icon Generator</h1>
+    <p>Click the buttons below to generate and download the PWA icons:</p>
+    <button onclick="generateIcon(192)">Generate 192x192 Icon</button>
+    <button onclick="generateIcon(512)">Generate 512x512 Icon</button>
+    
+    <div id="canvases" style="margin-top: 20px;"></div>
+
+    <script>
+        function generateIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Dark background
+            ctx.fillStyle = '#111827';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Link emoji (or use a simple design)
+            ctx.fillStyle = '#3b82f6';
+            ctx.font = `${size * 0.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🔗', size / 2, size / 2);
+            
+            // Add to page for preview
+            const container = document.getElementById('canvases');
+            const div = document.createElement('div');
+            div.style.margin = '10px';
+            div.appendChild(canvas);
+            
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = `Download ${size}x${size}`;
+            downloadBtn.onclick = () => {
+                const link = document.createElement('a');
+                link.download = `icon-${size}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            };
+            div.appendChild(downloadBtn);
+            
+            container.appendChild(div);
+        }
+    </script>
+</body>
+</html>

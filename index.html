@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Link Cleaner</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#111827">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
+      color: #f9fafb;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .container {
+      max-width: 400px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    h1 {
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    .input-group {
+      margin-bottom: 16px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #d1d5db;
+    }
+    
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #f9fafb;
+      font-size: 16px;
+      font-family: inherit;
+    }
+    
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+    
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #f9fafb;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .status {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+    
+    .status.success {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #86efac;
+    }
+    
+    .status.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+    
+    .icon {
+      font-size: 48px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🔗</div>
+    <h1>Link Cleaner</h1>
+    
+    <div class="input-group">
+      <label for="originalUrl">Original URL</label>
+      <textarea id="originalUrl" placeholder="Paste or share a link here..."></textarea>
+    </div>
+    
+    <div class="input-group">
+      <label for="cleanedUrl">Cleaned URL</label>
+      <textarea id="cleanedUrl" placeholder="Cleaned URL will appear here..." readonly></textarea>
+    </div>
+    
+    <div class="button-group">
+      <button id="cleanBtn" class="btn-primary">Clean Link</button>
+      <button id="shareBtn" class="btn-secondary" disabled>Share Clean</button>
+    </div>
+    
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    // Tracking parameters to remove
+    const TRACKING_PARAMS = [
+      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+      'fbclid', 'gclid', 'msclkid', 'twclid', 'igshid',
+      'ref', 'referer', 'referrer', '_ga', '_gid',
+      'mc_cid', 'mc_eid', 'campaign_id', 'ad_id',
+      'source', 'medium', 'campaign', 'content'
+    ];
+
+    // URL shorteners to resolve
+    const SHORTENERS = [
+      'bit.ly', 'tinyurl.com', 't.co', 'goo.gl', 'ow.ly',
+      'short.link', 'tiny.cc', 'is.gd', 'buff.ly', 'ift.tt'
+    ];
+
+    const originalUrlInput = document.getElementById('originalUrl');
+    const cleanedUrlInput = document.getElementById('cleanedUrl');
+    const cleanBtn = document.getElementById('cleanBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const status = document.getElementById('status');
+
+    // Clean tracking parameters from URL
+    function cleanUrl(urlString) {
+      try {
+        const url = new URL(urlString);
+        
+        // Remove tracking parameters
+        TRACKING_PARAMS.forEach(param => {
+          url.searchParams.delete(param);
+        });
+        
+        return url.toString();
+      } catch (e) {
+        return urlString;
+      }
+    }
+
+    // Attempt to resolve shortened URLs
+    async function resolveShortUrl(urlString) {
+      try {
+        const url = new URL(urlString);
+        
+        // Check if it's a known shortener
+        if (!SHORTENERS.some(shortener => url.hostname.includes(shortener))) {
+          return urlString;
+        }
+        
+        // Try to resolve with a HEAD request
+        const response = await fetch(urlString, { 
+          method: 'HEAD', 
+          redirect: 'manual',
+          mode: 'cors'
+        });
+        
+        // If we get a redirect response, use the Location header
+        if (response.status >= 300 && response.status < 400) {
+          const location = response.headers.get('Location');
+          if (location) {
+            return location;
+          }
+        }
+        
+        return urlString;
+      } catch (e) {
+        // If CORS blocks us or other error, return original
+        return urlString;
+      }
+    }
+
+    // Show status message
+    function showStatus(message, type = 'success') {
+      status.textContent = message;
+      status.className = `status ${type}`;
+      status.style.display = 'block';
+      setTimeout(() => {
+        status.style.display = 'none';
+      }, 3000);
+    }
+
+    // Clean link handler
+    cleanBtn.addEventListener('click', async () => {
+      const originalUrl = originalUrlInput.value.trim();
+      
+      if (!originalUrl) {
+        showStatus('Please enter a URL', 'error');
+        return;
+      }
+      
+      cleanBtn.textContent = 'Cleaning...';
+      cleanBtn.disabled = true;
+      
+      try {
+        // First, try to resolve if it's a short URL
+        let resolvedUrl = await resolveShortUrl(originalUrl);
+        
+        // Then clean tracking parameters
+        let cleanedUrl = cleanUrl(resolvedUrl);
+        
+        cleanedUrlInput.value = cleanedUrl;
+        shareBtn.disabled = false;
+        
+        if (cleanedUrl !== originalUrl) {
+          showStatus('Link cleaned successfully!');
+        } else {
+          showStatus('Link was already clean!');
+        }
+      } catch (e) {
+        showStatus('Error cleaning link', 'error');
+      } finally {
+        cleanBtn.textContent = 'Clean Link';
+        cleanBtn.disabled = false;
+      }
+    });
+
+    // Share clean link handler
+    shareBtn.addEventListener('click', async () => {
+      const cleanedUrl = cleanedUrlInput.value;
+      
+      if (!cleanedUrl) {
+        showStatus('No cleaned URL to share', 'error');
+        return;
+      }
+      
+      // Try Web Share API first
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Cleaned Link',
+            url: cleanedUrl
+          });
+          showStatus('Link shared successfully!');
+          return;
+        } catch (e) {
+          // User cancelled or error, fall back to clipboard
+        }
+      }
+      
+      // Fallback to clipboard
+      try {
+        await navigator.clipboard.writeText(cleanedUrl);
+        showStatus('Link copied to clipboard!');
+      } catch (e) {
+        showStatus('Could not copy link', 'error');
+      }
+    });
+
+    // Handle shared URLs from other apps
+    function handleSharedUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const sharedUrl = params.get('url') || params.get('text');
+      
+      if (sharedUrl) {
+        originalUrlInput.value = sharedUrl;
+        // Auto-clean shared URLs
+        cleanBtn.click();
+        
+        // Clear URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js')
+        .then(registration => {
+          console.log('SW registered:', registration);
+        })
+        .catch(error => {
+          console.log('SW registration failed:', error);
+        });
+    }
+
+    // Initialize
+    handleSharedUrl();
+    
+    // Auto-clean when URL is pasted
+    originalUrlInput.addEventListener('paste', () => {
+      setTimeout(() => {
+        if (originalUrlInput.value.trim()) {
+          cleanBtn.click();
+        }
+      }, 100);
+    });
+  </script>
+</body>
+</html>
