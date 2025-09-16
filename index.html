@@ -303,8 +303,12 @@
         
         if (cleanedUrl !== originalUrl) {
           showStatus('Link cleaned successfully!');
+          // Auto-share the cleaned link
+          setTimeout(() => shareCleanedUrl(), 500);
         } else {
           showStatus('Link was already clean!');
+          // Still auto-share even if it was already clean
+          setTimeout(() => shareCleanedUrl(), 500);
         }
       } catch (e) {
         showStatus('Error cleaning link', 'error');
@@ -314,8 +318,8 @@
       }
     });
 
-    // Share clean link handler
-    shareBtn.addEventListener('click', async () => {
+    // Share cleaned URL function
+    async function shareCleanedUrl() {
       const cleanedUrl = cleanedUrlInput.value;
       
       if (!cleanedUrl) {
@@ -327,13 +331,17 @@
       if (navigator.share) {
         try {
           await navigator.share({
-            title: 'Cleaned Link',
+            title: 'Cleaned Link - Forget My Past',
             url: cleanedUrl
           });
           showStatus('Link shared successfully!');
           return;
         } catch (e) {
           // User cancelled or error, fall back to clipboard
+          if (e.name !== 'AbortError') {
+            // Only show error if it wasn't user cancellation
+            console.log('Share failed, falling back to clipboard:', e);
+          }
         }
       }
       
@@ -344,20 +352,52 @@
       } catch (e) {
         showStatus('Could not copy link', 'error');
       }
-    });
+    }
+
+    // Share clean link handler
+    shareBtn.addEventListener('click', shareCleanedUrl);
 
     // Handle shared URLs from other apps
-    function handleSharedUrl() {
+    async function handleSharedUrl() {
       const params = new URLSearchParams(window.location.search);
       const sharedUrl = params.get('url') || params.get('text');
       
       if (sharedUrl) {
         originalUrlInput.value = sharedUrl;
-        // Auto-clean shared URLs
-        cleanBtn.click();
         
-        // Clear URL parameters
+        // Clear URL parameters immediately
         window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // Auto-clean and share without user interaction
+        try {
+          showStatus('Cleaning and sharing...', 'success');
+          
+          // Clean the URL
+          let resolvedUrl = await resolveShortUrl(sharedUrl);
+          let cleanedUrl = cleanUrl(resolvedUrl);
+          
+          cleanedUrlInput.value = cleanedUrl;
+          
+          // Immediately share the cleaned URL
+          if (navigator.share) {
+            await navigator.share({
+              title: 'Cleaned Link - Forget My Past',
+              url: cleanedUrl
+            });
+          } else {
+            // Fallback to clipboard
+            await navigator.clipboard.writeText(cleanedUrl);
+            showStatus('Cleaned link copied to clipboard!');
+          }
+        } catch (e) {
+          // If user cancels share or there's an error, show the normal interface
+          console.log('Auto-share cancelled or failed:', e);
+          if (e.name === 'AbortError') {
+            showStatus('Share cancelled - you can use the buttons below');
+          } else {
+            showStatus('Auto-share failed - you can use the buttons below', 'error');
+          }
+        }
       }
     }
 

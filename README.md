@@ -19,9 +19,11 @@ A simple Progressive Web App that removes tracking parameters from URLs and reso
 
 ### On mobile (recommended):
 1. **Install**: Visit the app and tap "Add to Home Screen" 
-2. **Share**: From any app, tap Share → "Link Cleaner"
-3. **Clean**: The app opens with your link ready to clean
-4. **Re-share**: Tap "Share Clean" to share the cleaned URL
+2. **Share**: From any app, tap Share → "Forget My Past"
+3. **Automatic**: The app instantly cleans and opens the share menu with the clean link
+4. **Done**: Choose where to share the cleaned URL - that's it!
+
+*Note: If auto-share fails or is cancelled, you can use the manual buttons as fallback*
 
 ### On desktop:
 1. **Visit**: Go to the app URL
