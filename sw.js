@@ -1,4 +1,4 @@
-const CACHE_NAME = 'link-cleaner-v1';
+const CACHE_NAME = 'forgetmypast-v2';
 const CORE_ASSETS = [
   './',
   './index.html',
