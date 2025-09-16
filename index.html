@@ -205,7 +205,11 @@
       'source', 'medium', 'campaign', 'content',
       // Google mobile search tracking parameters
       'ved', 'uact', 'sa', 'biw', 'bih', 'dpr', 'ei', 'gs_lcp',
-      'sclient', 'client', 'hs', 'hl', 'gl', 'cshid', 'psb'
+      'sclient', 'client', 'hs', 'hl', 'gl', 'cshid', 'psb',
+      // LinkedIn tracking parameters
+      'rcm', 'trk', 'trkInfo', 'lipi', 'licu', 'li_medium', 'li_source',
+      // Other common tracking parameters
+      'si', 's', 'sp', 'sr', 'st', 'se', 'sc', 'sd', 'sf', 'sg', 'sh'
     ];
 
     // URL shorteners to resolve
@@ -356,9 +360,12 @@
           showStatus('Link shared successfully!');
           return;
         } catch (e) {
-          // User cancelled or error, fall back to clipboard
-          if (e.name !== 'AbortError') {
-            // Only show error if it wasn't user cancellation
+          console.log('Share error:', e);
+          if (e.name === 'AbortError') {
+            showStatus('Share cancelled');
+            return;
+          } else {
+            // Share failed, fall back to clipboard
             console.log('Share failed, falling back to clipboard:', e);
           }
         }
@@ -369,6 +376,7 @@
         await navigator.clipboard.writeText(cleanedUrl);
         showStatus('Link copied to clipboard!');
       } catch (e) {
+        console.error('Clipboard error:', e);
         showStatus('Could not copy link', 'error');
       }
     }
@@ -396,26 +404,38 @@
           let cleanedUrl = cleanUrl(resolvedUrl);
           
           cleanedUrlInput.value = cleanedUrl;
+          shareBtn.disabled = false;
+          
+          // Small delay to ensure UI is updated
+          await new Promise(resolve => setTimeout(resolve, 300));
           
           // Immediately share the cleaned URL
           if (navigator.share) {
-            await navigator.share({
-              title: 'Cleaned Link - Forget My Past',
-              url: cleanedUrl
-            });
+            try {
+              await navigator.share({
+                title: 'Cleaned Link - Forget My Past',
+                url: cleanedUrl
+              });
+              showStatus('Link shared successfully!');
+            } catch (shareError) {
+              console.log('Share error:', shareError);
+              if (shareError.name === 'AbortError') {
+                showStatus('Share cancelled - you can use the buttons below');
+              } else {
+                // Fallback to clipboard if share fails
+                await navigator.clipboard.writeText(cleanedUrl);
+                showStatus('Share failed - link copied to clipboard!');
+              }
+            }
           } else {
             // Fallback to clipboard
             await navigator.clipboard.writeText(cleanedUrl);
             showStatus('Cleaned link copied to clipboard!');
           }
         } catch (e) {
-          // If user cancels share or there's an error, show the normal interface
-          console.log('Auto-share cancelled or failed:', e);
-          if (e.name === 'AbortError') {
-            showStatus('Share cancelled - you can use the buttons below');
-          } else {
-            showStatus('Auto-share failed - you can use the buttons below', 'error');
-          }
+          // If there's an error, show the normal interface
+          console.error('Auto-share error:', e);
+          showStatus('Auto-share failed - you can use the buttons below', 'error');
         }
       }
     }
