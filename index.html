@@ -209,7 +209,8 @@
     // URL shorteners to resolve
     const SHORTENERS = [
       'bit.ly', 'tinyurl.com', 't.co', 'goo.gl', 'ow.ly',
-      'short.link', 'tiny.cc', 'is.gd', 'buff.ly', 'ift.tt'
+      'short.link', 'tiny.cc', 'is.gd', 'buff.ly', 'ift.tt',
+      'share.google'
     ];
 
     const urlInput = document.getElementById('urlInput');
@@ -332,7 +333,7 @@
         return;
       }
       
-      // Try Web Share API first
+      // Try Web Share API first (prioritize native sharing)
       if (navigator.share) {
         try {
           await navigator.share({
@@ -346,15 +347,17 @@
             showStatus('Share cancelled');
             return;
           }
+          // Only fall back to clipboard if share API fails for other reasons
+          console.log('Share API failed, falling back to clipboard:', e);
         }
       }
       
-      // Fallback to clipboard
+      // Fallback to clipboard only if Web Share API is not available or failed
       try {
         await navigator.clipboard.writeText(url);
-        showStatus('Link copied to clipboard!');
+        showStatus('Share not available - link copied to clipboard!');
       } catch (e) {
-        showStatus('Could not copy link', 'error');
+        showStatus('Could not share or copy link', 'error');
       }
     }
 

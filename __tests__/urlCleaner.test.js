@@ -107,6 +107,15 @@ describe('URL Cleaner', () => {
       const resolved = await resolveShortUrl(url);
       expect(resolved).toBe(url);
     });
+
+    test('recognizes Google share URLs as shorteners', async () => {
+      // Mock fetch to simulate network error (will return original URL)
+      global.fetch = jest.fn(() => Promise.reject(new Error('Network error')));
+      
+      const url = 'https://share.google/QVUZpSpsi32AAQdtb';
+      const resolved = await resolveShortUrl(url);
+      expect(resolved).toBe(url); // Should attempt resolution but return original on error
+    });
   });
 
   describe('getTrackingParams', () => {
@@ -127,6 +136,7 @@ describe('URL Cleaner', () => {
       expect(shorteners).toContain('bit.ly');
       expect(shorteners).toContain('t.co');
       expect(shorteners).toContain('tinyurl.com');
+      expect(shorteners).toContain('share.google');
     });
   });
 });

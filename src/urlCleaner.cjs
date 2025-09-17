@@ -19,7 +19,8 @@ const TRACKING_PARAMS = [
 // URL shorteners to resolve
 const SHORTENERS = [
   'bit.ly', 'tinyurl.com', 't.co', 'goo.gl', 'ow.ly',
-  'short.link', 'tiny.cc', 'is.gd', 'buff.ly', 'ift.tt'
+  'short.link', 'tiny.cc', 'is.gd', 'buff.ly', 'ift.tt',
+  'share.google'
 ];
 
 /**
