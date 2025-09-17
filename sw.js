@@ -1,4 +1,4 @@
-const CACHE_NAME = 'forgetmypast-v2';
+const CACHE_NAME = 'forgetmypast-v4';
 const CORE_ASSETS = [
   './',
   './index.html',

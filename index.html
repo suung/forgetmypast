@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Forget My Past</title>
-  <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./favicon.png" type="image/png">
+  <link rel="manifest" href="./manifest.webmanifest?v=2.0.0">
+  <link rel="icon" href="./favicon.png?v=2.0.0" type="image/png">
   <meta name="theme-color" content="#111827">
   <style>
     * {
@@ -444,11 +447,29 @@
       installBtn.style.display = 'none';
     });
 
-    // Register service worker
+    // Register service worker with update checking
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js')
+      navigator.serviceWorker.register('./sw.js?v=2.0.0')
         .then(registration => {
           console.log('SW registered:', registration);
+          
+          // Check for updates every time the page loads
+          registration.update();
+          
+          // Listen for updates
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New version available, show update prompt
+                  if (confirm('New version available! Refresh to update?')) {
+                    window.location.reload();
+                  }
+                }
+              });
+            }
+          });
         })
         .catch(error => {
           console.log('SW registration failed:', error);
